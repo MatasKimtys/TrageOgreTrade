@@ -1,11 +1,13 @@
 #include <iostream>
-#include "lib/Trader.h"
+#include "lib/Trader.cpp"
+#include "lib/Data.h"
+
+using Balance_t = std::tuple<std::string, bool, double, double>;
 
 int main(int, char**){
     std::cout << "Hello, from TradeOgreTrade!\n";
-    const std::string host = "tradeogre.com";
-    const std::string path = "/api/v1/markets";
-    const double timeout = 10.0;
-    Trader Trader(0, host, path, timeout);
+    const std::string host = "https://tradeogre.com/api/v1";
+    Trader trader(0, host);
+    std::string balance = trader.getOrdersSpecificMarket("QUBIC-USDT");
 
 }

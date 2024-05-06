@@ -1,11 +1,10 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.1)
 project(TradeOgreTrade VERSION 0.1.0 LANGUAGES C CXX)
 
-include(CTest)
-enable_testing()
-
+find_package(cpprestsdk REQUIRED)
+find_package(OpenSSL REQUIRED)
+include_directories(${OPENSSL_INCLUDE_DIR})
 add_executable(TradeOgreTrade main.cpp)
-target_link_libraries(TradeOgreTrade uuid)
-set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-include(CPack)
+
+target_link_libraries(TradeOgreTrade PUBLIC uuid cpprestsdk::cpprest ${OPENSSL_LIBRARIES})
+
