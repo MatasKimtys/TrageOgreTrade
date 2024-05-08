@@ -27,21 +27,19 @@ Trader::Trader(const unsigned int traderNumber, const std::string& host) {
     m_requestInformation.host = host;
     m_traderNumber = traderNumber;
     setApiKey();
+    m_balances = getBalances();
     std::cout << "Trader " << traderNumber << " created!\n";
 }
 
-void Trader::submitBuyOrder(const std::string& market, const double& quantity, const double& price, const double timeout)
-{
+void Trader::submitBuyOrder(const std::string& market, const double& quantity, const double& price, const double timeout) {
     std::string path {"/order/buy"};
 }
 
-void Trader::submitSellOrder(const std::string& market, const double& quantity, const double& price, const double timeout)
-{
+void Trader::submitSellOrder(const std::string& market, const double& quantity, const double& price, const double timeout) {
     std::string path {"/order/sell"};
 }
 
-void Trader::submitCancelOrder(uuid_t UUID, const double timeout)
-{
+void Trader::submitCancelOrder(uuid_t UUID, const double timeout) {
     std::string path {"/order/cancel"};
 
 }
@@ -59,13 +57,12 @@ OrderMarket Trader::getSpecificMarketJson(const std::string& market) const {
             const auto& v = response.extract_string().get();
             web::json::value json = json::value::parse(v);
 
-
             orderMarket.status = json["success"].as_bool();
-            for (auto [key, value] : json["buy"].as_object()) {
+            for (auto [key, value]:json["buy"].as_object()) {
                 orderMarket.buyOrders[std::stof(key)] = std::stof(value.as_string());
             }
 
-            for (auto [key, value] : json["sell"].as_object()) {
+            for (auto [key, value]:json["sell"].as_object()) {
                 orderMarket.sellOrders[std::stof(key)] = std::stof(value.as_string());
             }
 
@@ -76,24 +73,14 @@ OrderMarket Trader::getSpecificMarketJson(const std::string& market) const {
         std::cout << "exception: " << e.error_code().message() << " " << e.what() << "\n";
     }
     }).wait();
-    std::cout << std::endl;
-        // "array:" << json.is_array() << "\n" <<
-        // "bool:" << json.is_boolean() << "\n" <<
-        // "int:" << json.is_integer() << "\n" <<
-        // "double:" << json.is_double() << "\n" <<
-        // "null:" << json.is_null() << "\n" <<
-        // "string:" << json.is_string() << "\n" <<
-        // "object:" << json.is_object() << "\n";
     return orderMarket;
 }
 
-void Trader::downloadOrdersSpecificMarket(const std::string& market)
-{
+void Trader::downloadOrdersSpecificMarket(const std::string& market) {
     auto fileStream = std::make_shared<ostream>();
     pplx::task<web::json::value> jsonOutput;
     // Open stream to output file.
-    pplx::task<void> requestTask = fstream::open_ostream(U(market + ".json")).then([=](ostream outFile)
-    {
+    pplx::task<void> requestTask = fstream::open_ostream(U(market + ".json")).then([=](ostream outFile) {
         *fileStream = outFile;
 
         // Create http_client to send the request.
@@ -106,8 +93,7 @@ void Trader::downloadOrdersSpecificMarket(const std::string& market)
     })
 
     // Handle response headers arriving.
-    .then([=](http_response response)
-    {
+    .then([=](http_response response) {
         printf("Received response status code:%u\n", response.status_code());
 
         // Write response body into the file.
@@ -115,45 +101,59 @@ void Trader::downloadOrdersSpecificMarket(const std::string& market)
     })
 
     // Close the file stream.
-    .then([=](size_t)
-    {
+    .then([=](size_t) {
         return fileStream->close();
     });
 
     // Wait for all the outstanding I/O to complete and handle any exceptions
-    try
-    {
+    try {
         requestTask.wait();
-    }
-    catch (const std::exception &e)
-    {
+    } catch (const std::exception &e) {
         printf("Error exception:%s\n", e.what());
     }
 }
 
-std::string Trader::getOrders()
-{
+std::string Trader::getOrders() {
     std::string path {"/account/orders"};
-    return std::string();
+    return std::string();    
 }
 
-std::tuple<std::string, bool, double, double> Trader::getBalance(const std::string& currency)
-{
+std::tuple<std::string, bool, double, double> Trader::getBalance(const std::string& currency) {
     std::string url {m_requestInformation.host + "/account/balance{" + currency + "}"};
 
-    using Balance_t = std::tuple<std::string, bool, double, double>;
-
-    Balance_t balance {"NaN", false, 0.0, 0.0};
-    std::cout << "Get balance requested:" << 
-        std::get<0>(balance) << "," << 
-        std::get<1>(balance) << "," << 
-        std::get<2>(balance) << "," << 
-        std::get<3>(balance) << "\n";
-    return balance;
+    return {};
 }
 
-std::string Trader::getBalances()
-{
-    std::string path {"/account/orders"};
-    return std::string();
+std::map<std::string, double> Trader::getBalances() const {
+    std::map<std::string, double> balances;
+    std::string url = m_requestInformation.host + "/account/balances";
+    http_request request;
+    request.set_method(methods::GET);
+    http_client_config config;
+    credentials credentials(U(m_apiKey.key), U(m_apiKey.secret));
+    config.set_credentials(credentials);
+    http_client client(url, config);
+    client.request(request)
+    .then([&balances](http_response response) {
+        try {
+            if (response.status_code() == status_codes::OK) {
+                std::cout << "Status code somethings right " << response.status_code() << std::endl;
+                const auto& v = response.extract_string().get();
+                web::json::value json = json::value::parse(v);
+                for (auto [key, value] : json["balances"].as_object()) {
+                    const double balance = std::stof(value.as_string());
+                    if (balance < 1) {
+                        continue;
+                    }
+                    balances[key] = balance;
+                }
+            } else {
+                std::cerr << "Status code somethings wrong " << response.status_code() << std::endl;
+            }
+        } catch (const http_exception& e) {
+            std::cout << "exception: " << e.error_code().message() << " " << e.what() << "\n";
+        }
+    }).wait();
+
+    return balances;
 }

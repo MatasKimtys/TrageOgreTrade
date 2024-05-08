@@ -18,16 +18,17 @@ struct ApiKey {
 };
 
 class Trader {
-private:
 protected:
     ApiKey m_apiKey;
     RequestInformation m_requestInformation;
     unsigned int m_traderNumber;
+    std::map<std::string, double> m_balances;
+
     void submitBuyOrder(const std::string& market, const double& quantity, const double& price, const double timeout);
     void submitSellOrder(const std::string& market, const double& quantity, const double& price, const double timeout);
     void submitCancelOrder(uuid_t UUID, const double timeout);
+    std::map<std::string, double> getBalances() const;
     std::string getOrders();
-    std::string getBalances();
     std::pair<std::string, std::string> getApiKey() const {
         auto apiKeyPath = std::filesystem::current_path() / "apikey.txt";
         std::ifstream file(apiKeyPath);
