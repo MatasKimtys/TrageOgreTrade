@@ -65,10 +65,9 @@ struct SellOrder : Order {};
 class DataHolder
 {
 private:
-    /* data */
+    
 public:
-
-    std::string listMarkets();
     DataHolder(/* args */);
     ~DataHolder();
+    
 };
