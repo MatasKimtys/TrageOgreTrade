@@ -1,19 +1,10 @@
-#include <iostream>
-#include <uuid/uuid.h>
-#include <vector>
 #include <cpprest/http_client.h>
-#include <iostream>
 #include <cpprest/json.h>
-
-struct GetOrder {
-    bool status;
-    unsigned int date;
-    std::string type;
-    std::string market;
-    double price;
-    double quantity;
-    double fulfilled;
-};
+#include <uuid/uuid.h>
+#include "Data.h"
+#include <iostream>
+#include <vector>
+#include <iostream>
 
 struct RequestInformation {
     std::string host;
@@ -35,5 +26,5 @@ public:
     ~Trader() {};
     std::tuple<std::string, bool, double, double> getBalance(const std::string& currency);
     void downloadOrdersSpecificMarket(const std::string &market);
-    pplx::task<void> getSpecificMarketJson(const std::string& market);
+    OrderMarket getSpecificMarketJson(const std::string& market) const;
 };

@@ -45,56 +45,45 @@ void Trader::submitCancelOrder(uuid_t UUID, const double timeout)
 
 }
 
-
-
-pplx::task<void> Trader::getSpecificMarketJson(const std::string& market) {
+OrderMarket Trader::getSpecificMarketJson(const std::string& market) const {
     std::string url = m_requestInformation.host + "/orders/" + market;
     http_request request;
     request.set_method(methods::GET);
     http_client client(url);
-    auto requestTask = client.request(request).then([](http_response response) -> pplx::task<json::value> {
-        try {
-            if (response.status_code() == status_codes::OK) {
-                std::cout << "Status code somethings right " << response.status_code() << std::endl;
-                const auto& v = response.extract_string().get();
-                web::json::value json = json::value::parse(v);
-                // std::cout << json.serialize().c_str() << std::endl;
-                std::cout << "success:" << json["success"] << std::endl;
-                std::cout << "buy:{" << std::endl;
-                for (auto [key, value] : json["buy"].as_object()) {
-                    std::cout << "  " << key << ":" << value << std::endl;
-                }
-                std::cout << "}"  << std::endl;
+    OrderMarket orderMarket;
+    client.request(request).then([&orderMarket](http_response response) {
+    try {
+        if (response.status_code() == status_codes::OK) {
+            std::cout << "Status code somethings right " << response.status_code() << std::endl;
+            const auto& v = response.extract_string().get();
+            web::json::value json = json::value::parse(v);
 
-                std::cout << "sell:{" << std::endl;
-                for (auto [key, value] : json["sell"].as_object()) {
-                    std::cout << "  " << key << ":" << value << std::endl;
-                }
-                std::cout << "}"  << std::endl;
-                // std::cout << 
-                //     "array:" << json.is_array() << "\n" <<
-                //     "bool:" << json.is_boolean() << "\n" <<
-                //     "int:" << json.is_integer() << "\n" <<
-                //     "double:" << json.is_double() << "\n" <<
-                //     "null:" << json.is_null() << "\n" <<
-                //     "string:" << json.is_string() << "\n" <<
-                //     "object:" << json.is_object() << "\n";
 
-                return pplx::task_from_result(json::value());
-
-            } else {
-                std::cerr << "Status code somethings wrong " << response.status_code() << std::endl;
-                return pplx::task_from_result(json::value());
+            orderMarket.status = json["success"].as_bool();
+            for (auto [key, value] : json["buy"].as_object()) {
+                orderMarket.buyOrders[std::stof(key)] = std::stof(value.as_string());
             }
-        } catch (const http_exception& e) {
-            std::cout << "exception: " << e.error_code().message() << " " << e.what() << "\n";
+
+            for (auto [key, value] : json["sell"].as_object()) {
+                orderMarket.sellOrders[std::stof(key)] = std::stof(value.as_string());
+            }
+
+        } else {
+            std::cerr << "Status code somethings wrong " << response.status_code() << std::endl;
         }
-    });
-
-    auto result = requestTask.get();
-    std::cout << std::endl; 
-
-    return {};
+    } catch (const http_exception& e) {
+        std::cout << "exception: " << e.error_code().message() << " " << e.what() << "\n";
+    }
+    }).wait();
+    std::cout << std::endl;
+        // "array:" << json.is_array() << "\n" <<
+        // "bool:" << json.is_boolean() << "\n" <<
+        // "int:" << json.is_integer() << "\n" <<
+        // "double:" << json.is_double() << "\n" <<
+        // "null:" << json.is_null() << "\n" <<
+        // "string:" << json.is_string() << "\n" <<
+        // "object:" << json.is_object() << "\n";
+    return orderMarket;
 }
 
 void Trader::downloadOrdersSpecificMarket(const std::string& market)
