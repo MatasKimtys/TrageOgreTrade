@@ -1,0 +1,17 @@
+[
+    {
+        "uuid":"a40ac710-8dc5-b5a8-aa69-389715197b14",
+        "date":1514876938,
+        "type":"sell",
+        "price":"0.02621960",
+        "quantity":"1.55772526",
+        "market":"XMR-BTC"
+    },
+    {
+        "uuid":"7cbbdbf9-a3a8-d106-c53a-2b17e535580d",
+        "date":1514856437,
+        "type":"sell",
+        "price":"0.02590469",
+        "quantity":"1.54412193","market":"XMR-BTC"
+    }
+]

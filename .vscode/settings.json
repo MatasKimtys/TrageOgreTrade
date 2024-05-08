@@ -89,6 +89,7 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "typeindex": "cpp",
-        "*.dat": "cpp"
+        "*.dat": "cpp",
+        "*.ipp": "cpp"
     }
 }

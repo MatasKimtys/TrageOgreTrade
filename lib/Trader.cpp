@@ -1,6 +1,5 @@
 #include "Trader.h"
 #include <tuple>
-#include <iostream>
 #include <fstream>
 
 #include <cpprest/http_listener.h>              // HTTP server
@@ -46,12 +45,64 @@ void Trader::submitCancelOrder(uuid_t UUID, const double timeout)
 
 }
 
-std::string Trader::getOrdersSpecificMarket(const std::string& market)
+
+
+pplx::task<void> Trader::getSpecificMarketJson(const std::string& market) {
+    std::string url = m_requestInformation.host + "/orders/" + market;
+    http_request request;
+    request.set_method(methods::GET);
+    http_client client(url);
+    auto requestTask = client.request(request).then([](http_response response) -> pplx::task<json::value> {
+        try {
+            if (response.status_code() == status_codes::OK) {
+                std::cout << "Status code somethings right " << response.status_code() << std::endl;
+                const auto& v = response.extract_string().get();
+                web::json::value json = json::value::parse(v);
+                // std::cout << json.serialize().c_str() << std::endl;
+                std::cout << "success:" << json["success"] << std::endl;
+                std::cout << "buy:{" << std::endl;
+                for (auto [key, value] : json["buy"].as_object()) {
+                    std::cout << "  " << key << ":" << value << std::endl;
+                }
+                std::cout << "}"  << std::endl;
+
+                std::cout << "sell:{" << std::endl;
+                for (auto [key, value] : json["sell"].as_object()) {
+                    std::cout << "  " << key << ":" << value << std::endl;
+                }
+                std::cout << "}"  << std::endl;
+                // std::cout << 
+                //     "array:" << json.is_array() << "\n" <<
+                //     "bool:" << json.is_boolean() << "\n" <<
+                //     "int:" << json.is_integer() << "\n" <<
+                //     "double:" << json.is_double() << "\n" <<
+                //     "null:" << json.is_null() << "\n" <<
+                //     "string:" << json.is_string() << "\n" <<
+                //     "object:" << json.is_object() << "\n";
+
+                return pplx::task_from_result(json::value());
+
+            } else {
+                std::cerr << "Status code somethings wrong " << response.status_code() << std::endl;
+                return pplx::task_from_result(json::value());
+            }
+        } catch (const http_exception& e) {
+            std::cout << "exception: " << e.error_code().message() << " " << e.what() << "\n";
+        }
+    });
+
+    auto result = requestTask.get();
+    std::cout << std::endl; 
+
+    return {};
+}
+
+void Trader::downloadOrdersSpecificMarket(const std::string& market)
 {
     auto fileStream = std::make_shared<ostream>();
     pplx::task<web::json::value> jsonOutput;
     // Open stream to output file.
-    pplx::task<void> requestTask = fstream::open_ostream(U("results.html")).then([=](ostream outFile)
+    pplx::task<void> requestTask = fstream::open_ostream(U(market + ".json")).then([=](ostream outFile)
     {
         *fileStream = outFile;
 
@@ -88,8 +139,6 @@ std::string Trader::getOrdersSpecificMarket(const std::string& market)
     {
         printf("Error exception:%s\n", e.what());
     }
-
-    return std::string();
 }
 
 std::string Trader::getOrders()

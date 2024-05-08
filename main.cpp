@@ -8,6 +8,6 @@ int main(int, char**){
     std::cout << "Hello, from TradeOgreTrade!\n";
     const std::string host = "https://tradeogre.com/api/v1";
     Trader trader(0, host);
-    std::string balance = trader.getOrdersSpecificMarket("QUBIC-USDT");
+    trader.getSpecificMarketJson("QUBIC-USDT").wait();
 
 }
