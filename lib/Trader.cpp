@@ -26,6 +26,7 @@ using namespace web::json;                                  // JSON library
 Trader::Trader(const unsigned int traderNumber, const std::string& host) {
     m_requestInformation.host = host;
     m_traderNumber = traderNumber;
+    setApiKey();
     std::cout << "Trader " << traderNumber << " created!\n";
 }
 

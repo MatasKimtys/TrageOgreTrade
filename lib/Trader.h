@@ -5,14 +5,22 @@
 #include <iostream>
 #include <vector>
 #include <iostream>
+#include <filesystem>
 
 struct RequestInformation {
     std::string host;
     double timeout;
 };
 
+struct ApiKey {
+    std::string key;
+    std::string secret;
+};
+
 class Trader {
 private:
+protected:
+    ApiKey m_apiKey;
     RequestInformation m_requestInformation;
     unsigned int m_traderNumber;
     void submitBuyOrder(const std::string& market, const double& quantity, const double& price, const double timeout);
@@ -20,6 +28,21 @@ private:
     void submitCancelOrder(uuid_t UUID, const double timeout);
     std::string getOrders();
     std::string getBalances();
+    std::pair<std::string, std::string> getApiKey() const {
+        auto apiKeyPath = std::filesystem::current_path() / "apikey.txt";
+        std::ifstream file(apiKeyPath);
+        std::string key;
+        std::string value;
+        std::getline(file, key);
+        std::getline(file, value);
+        file.close();
+        return {key, value};
+    };
+    void setApiKey() {
+        std::pair<std::string, std::string> currentApiKey {getApiKey()};
+        m_apiKey.key = currentApiKey.first;
+        m_apiKey.secret = currentApiKey.second;
+    }
 
 public:
     Trader(const unsigned int traderNumber, const std::string& host);
