@@ -1,7 +1,21 @@
 #include <iostream>
 #include "lib/Trader.cpp"
+#include "ctime"
+#include "chrono"
 
 using Balance_t = std::tuple<std::string, bool, double, double>;
+struct RunTime {
+    std::time_t startTime;
+    std::time_t endTime;
+};
+
+void printTimeTaken(RunTime runTime) {
+    const std::chrono::seconds duration (runTime.endTime - runTime.startTime);
+    const auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
+    const auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration - hours);
+    const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration - hours - minutes);
+    std::cout << "Total runtime: " << hours.count() << " hours " << minutes.count() << " minutes " << seconds.count() << " seconds\n";
+}
 
 void copyFilesToBuild(const std::string filename) {
     std::filesystem::path currentWorkingDirectory = std::filesystem::current_path();
@@ -22,10 +36,13 @@ void copyFilesToBuild(const std::string filename) {
 }
 
 int main(int, char**){
+    RunTime runTime;
+    runTime.startTime = std::time(nullptr);
     std::cout << "Hello, from TradeOgreTrade!\n";
     copyFilesToBuild("apikey.txt");
     const std::string host = "https://tradeogre.com/api/v1";
     Trader trader(0, host);
     trader.getSpecificMarketJson("QUBIC-USDT");
-
+    runTime.endTime = std::time(nullptr);
+    printTimeTaken(runTime);
 }
