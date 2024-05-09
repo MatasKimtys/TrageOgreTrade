@@ -28,6 +28,7 @@ Trader::Trader(const unsigned int traderNumber, const std::string& host) {
     m_traderNumber = traderNumber;
     setApiKey();
     m_balances = getBalances();
+    m_markets = listMarkets();
     std::cout << "Trader " << traderNumber << " created!\n";
 }
 
@@ -74,6 +75,45 @@ OrderMarket Trader::getSpecificMarketJson(const std::string& market) const {
     }
     }).wait();
     return orderMarket;
+}
+
+std::map<std::string, Market> Trader::listMarkets() const {
+    std::string url = m_requestInformation.host + "/markets";
+    http_request request;
+    request.set_method(methods::GET);
+    http_client client(url);
+    std::map<std::string, Market> markets;
+    client.request(request).then([&markets](http_response response) {
+    try {
+        if (response.status_code() == status_codes::OK) {
+            std::cout << "Status code somethings right " << response.status_code() << std::endl;
+            const auto& v = response.extract_string().get();
+            web::json::value json = json::value::parse(v);
+
+            for (auto element : json.as_array()) {
+                auto pair = element.as_object();
+                for (auto [key, value] : pair) {
+                    markets[key] = 
+                        Market{
+                            key, 
+                            std::stof(value["initialprice"].as_string()),
+                            std::stof(value["price"].as_string()),
+                            std::stof(value["high"].as_string()),
+                            std::stof(value["low"].as_string()),
+                            std::stof(value["volume"].as_string()),
+                            std::stof(value["bid"].as_string()),
+                            std::stof(value["ask"].as_string())
+                        };
+                }
+            }
+        } else {
+            std::cerr << "Status code somethings wrong " << response.status_code() << std::endl;
+        }
+    } catch (const http_exception& e) {
+        std::cout << "exception: " << e.error_code().message() << " " << e.what() << "\n";
+    }
+    }).wait();
+    return markets;
 }
 
 void Trader::downloadOrdersSpecificMarket(const std::string& market) {

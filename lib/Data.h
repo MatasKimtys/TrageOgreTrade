@@ -33,6 +33,7 @@ struct Order {
 
 struct Market {
     std::string currency;
+    double initialPrice;
     double price;
     double high;
     double low;

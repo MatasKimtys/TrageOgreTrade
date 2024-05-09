@@ -23,7 +23,8 @@ protected:
     RequestInformation m_requestInformation;
     unsigned int m_traderNumber;
     std::map<std::string, double> m_balances;
-
+    std::map<std::string, Market> m_markets;
+    
     void submitBuyOrder(const std::string& market, const double& quantity, const double& price, const double timeout);
     void submitSellOrder(const std::string& market, const double& quantity, const double& price, const double timeout);
     void submitCancelOrder(uuid_t UUID, const double timeout);
@@ -51,4 +52,5 @@ public:
     std::tuple<std::string, bool, double, double> getBalance(const std::string& currency);
     void downloadOrdersSpecificMarket(const std::string &market);
     OrderMarket getSpecificMarketJson(const std::string& market) const;
+    std::map<std::string, Market> listMarkets() const;
 };
