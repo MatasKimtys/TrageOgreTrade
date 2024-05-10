@@ -9,13 +9,30 @@ struct Balance {
 };
 
 struct GetOrder {
-    bool status;
-    unsigned int date;
+    std::string uuid;
+    int date;
     std::string type;
     std::string market;
     double price;
     double quantity;
     double fulfilled;
+    GetOrder() {}
+    GetOrder(
+        const std::string& _uuid,
+        const int& _date,
+        const std::string& _type,
+        const std::string& _market,
+        const double& _price,
+        const double& _quantity,
+        const double& _fulfilled
+    ) :
+        uuid(_uuid),
+        date(_date),
+        type(_type),
+        market(_market),
+        price(_price),
+        quantity(_quantity),
+        fulfilled(_fulfilled) {}
 };
 
 struct OrderMarket {
@@ -26,7 +43,7 @@ struct OrderMarket {
 
 struct Order {
     bool status;
-    uuid_t uuid;
+    std::string uuid;
     double buyNewBalanceAvailable;
     double sellNewBalanceAvailable;
 };

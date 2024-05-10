@@ -1,6 +1,5 @@
 #include <cpprest/http_client.h>
 #include <cpprest/json.h>
-#include <uuid/uuid.h>
 #include "Data.h"
 #include <iostream>
 #include <vector>
@@ -24,12 +23,13 @@ protected:
     unsigned int m_traderNumber;
     std::map<std::string, double> m_balances;
     std::map<std::string, Market> m_markets;
+    std::map<std::string, std::map<std::string, std::map<std::string, GetOrder>>> m_orders;
     
     void submitBuyOrder(const std::string& market, const double& quantity, const double& price, const double timeout);
     void submitSellOrder(const std::string& market, const double& quantity, const double& price, const double timeout);
-    void submitCancelOrder(uuid_t UUID, const double timeout);
+    void submitCancelOrder(std::string uuid, const double timeout);
     std::map<std::string, double> getBalances() const;
-    std::string getOrders();
+    std::map<std::string, std::map<std::string, std::map<std::string, GetOrder>>> getOrders() const;
     std::pair<std::string, std::string> getApiKey() const {
         auto apiKeyPath = std::filesystem::current_path() / "apikey.txt";
         std::ifstream file(apiKeyPath);

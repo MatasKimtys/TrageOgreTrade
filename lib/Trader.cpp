@@ -1,7 +1,3 @@
-#include "Trader.h"
-#include <tuple>
-#include <fstream>
-
 #include <cpprest/http_listener.h>              // HTTP server
 #include <cpprest/json.h>                       // JSON library
 #include <cpprest/uri.h>                        // URI library
@@ -12,6 +8,11 @@
 #include <cpprest/producerconsumerstream.h>     // Async streams for producer consumer scenarios
 #include <cpprest/http_client.h>
 #include <cpprest/filestream.h>
+
+#include "Trader.h"
+#include <tuple>
+#include <fstream>
+#include <algorithm>
 
 using namespace utility;                    // Common utilities like string conversions
 using namespace web;                        // Common features like URIs.
@@ -29,6 +30,7 @@ Trader::Trader(const unsigned int traderNumber, const std::string& host) {
     setApiKey();
     m_balances = getBalances();
     m_markets = listMarkets();
+    m_orders = getOrders();
     std::cout << "Trader " << traderNumber << " created!\n";
 }
 
@@ -40,7 +42,7 @@ void Trader::submitSellOrder(const std::string& market, const double& quantity, 
     std::string path {"/order/sell"};
 }
 
-void Trader::submitCancelOrder(uuid_t UUID, const double timeout) {
+void Trader::submitCancelOrder(std::string UUID, const double timeout) {
     std::string path {"/order/cancel"};
 
 }
@@ -54,7 +56,7 @@ OrderMarket Trader::getSpecificMarketJson(const std::string& market) const {
     client.request(request).then([&orderMarket](http_response response) {
     try {
         if (response.status_code() == status_codes::OK) {
-            std::cout << "Status code somethings right " << response.status_code() << std::endl;
+            std::cout << "Status code getSpecificMarketJson success " << response.status_code() << std::endl;
             const auto& v = response.extract_string().get();
             web::json::value json = json::value::parse(v);
 
@@ -68,7 +70,7 @@ OrderMarket Trader::getSpecificMarketJson(const std::string& market) const {
             }
 
         } else {
-            std::cerr << "Status code somethings wrong " << response.status_code() << std::endl;
+            std::cerr << "Status code getSpecificMarketJson failed " << response.status_code() << std::endl;
         }
     } catch (const http_exception& e) {
         std::cout << "exception: " << e.error_code().message() << " " << e.what() << "\n";
@@ -86,7 +88,7 @@ std::map<std::string, Market> Trader::listMarkets() const {
     client.request(request).then([&markets](http_response response) {
     try {
         if (response.status_code() == status_codes::OK) {
-            std::cout << "Status code somethings right " << response.status_code() << std::endl;
+            std::cout << "Status code listMarkets success " << response.status_code() << std::endl;
             const auto& v = response.extract_string().get();
             web::json::value json = json::value::parse(v);
 
@@ -107,7 +109,7 @@ std::map<std::string, Market> Trader::listMarkets() const {
                 }
             }
         } else {
-            std::cerr << "Status code somethings wrong " << response.status_code() << std::endl;
+            std::cerr << "Status code listMarkets failed " << response.status_code() << std::endl;
         }
     } catch (const http_exception& e) {
         std::cout << "exception: " << e.error_code().message() << " " << e.what() << "\n";
@@ -153,10 +155,56 @@ void Trader::downloadOrdersSpecificMarket(const std::string& market) {
     }
 }
 
-std::string Trader::getOrders() {
-    std::string path {"/account/orders"};
-    return std::string();    
+std::map<std::string, std::map<std::string, std::map<std::string, GetOrder>>> Trader::getOrders() const {
+    std::map<std::string, std::map<std::string, std::map<std::string, GetOrder>>> orders;
+    std::string url = m_requestInformation.host + "/account/orders";
+    http_request request;
+    request.set_method(methods::POST);
+    http_client_config config;
+    credentials credentials(U(m_apiKey.key), U(m_apiKey.secret));
+    config.set_credentials(credentials);
+    http_client client(url, config);
+    client.request(request)
+    .then([&orders](http_response response) {
+        try {
+            if (response.status_code() == status_codes::OK) {
+                std::cout << "Status code getOrders success " << response.status_code() << std::endl;
+                const auto& v = response.extract_string().get();
+                web::json::value json = json::value::parse(v);
+                for (const auto& element : json.as_array()) {
+                    auto pair = element.as_object();
+                    const std::string type = pair["type"].as_string();
+                    const std::string market = pair["market"].as_string();
+                    const std::string uuid = pair["uuid"].as_string();
+                    orders[market][type][uuid] = GetOrder(
+                        uuid,
+                        pair["date"].as_integer(),
+                        type,
+                        market,
+                        std::stof(pair["price"].as_string()),
+                        std::stof(pair["quantity"].as_string()),
+                        std::stof(pair["fulfilled"].as_string())
+                    );
+                }
+            } else {
+                std::cerr << "Status code getOrders failed " << response.status_code() << std::endl;
+            }
+        } catch (const http_exception& e) {
+            std::cout << "exception: " << e.error_code().message() << " " << e.what() << "\n";
+        }
+    }).wait();
+    return orders;
 }
+
+                        // std::cout << 
+                        //     value.is_array() << "\n" <<
+                        //     value.is_boolean() << "\n" <<
+                        //     value.is_double() << "\n" <<
+                        //     value.is_integer() << "\n" <<
+                        //     value.is_null() << "\n" <<
+                        //     value.is_number() << "\n" <<
+                        //     value.is_object() << "\n" <<
+                        //     value.is_string() << "\n";
 
 std::tuple<std::string, bool, double, double> Trader::getBalance(const std::string& currency) {
     std::string url {m_requestInformation.host + "/account/balance{" + currency + "}"};
@@ -177,7 +225,7 @@ std::map<std::string, double> Trader::getBalances() const {
     .then([&balances](http_response response) {
         try {
             if (response.status_code() == status_codes::OK) {
-                std::cout << "Status code somethings right " << response.status_code() << std::endl;
+                std::cout << "Status code getBalances success " << response.status_code() << std::endl;
                 const auto& v = response.extract_string().get();
                 web::json::value json = json::value::parse(v);
                 for (auto [key, value] : json["balances"].as_object()) {
@@ -188,7 +236,7 @@ std::map<std::string, double> Trader::getBalances() const {
                     balances[key] = balance;
                 }
             } else {
-                std::cerr << "Status code somethings wrong " << response.status_code() << std::endl;
+                std::cerr << "Status code getBalances failed " << response.status_code() << std::endl;
             }
         } catch (const http_exception& e) {
             std::cout << "exception: " << e.error_code().message() << " " << e.what() << "\n";
