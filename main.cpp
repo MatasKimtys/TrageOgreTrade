@@ -14,7 +14,11 @@ void printTimeTaken(RunTime runTime) {
     const auto hours = std::chrono::duration_cast<std::chrono::hours>(duration);
     const auto minutes = std::chrono::duration_cast<std::chrono::minutes>(duration - hours);
     const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration - hours - minutes);
-    std::cout << "Total runtime: " << hours.count() << " hours " << minutes.count() << " minutes " << seconds.count() << " seconds\n";
+    std::string output = "Total runtime: ";
+        output += (hours.count() > 0) ? std::to_string(hours.count()) + " hour" + ((hours.count() == 1) ? " " : "s ") : "";
+        output += (minutes.count() > 0) ? std::to_string(minutes.count()) + " minute" + ((minutes.count() == 1) ? " " : "s ") : "";
+        output += std::to_string(seconds.count()) + " second" + ((seconds.count() == 1) ? " " : "s ");
+    std::cout << output << "\n";
 }
 
 void copyFilesToBuild(const std::string filename) {
