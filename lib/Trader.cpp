@@ -31,7 +31,7 @@ Trader::Trader(const unsigned int traderNumber, const std::string& host) {
     m_balances = getBalances();
     m_markets = listMarkets();
     m_orders = getOrders();
-    getTicker("QUBIC-USDT");
+    m_ticker = getTicker("QUBIC-USDT");
     std::cout << "Trader " << traderNumber << " created!\n";
 }
 
@@ -210,6 +210,38 @@ std::map<std::string, double> Trader::getBalances() const {
     }).wait();
 
     return balances;
+}
+
+Ticker Trader::getTicker(const std::string market) const {
+    std::string url = m_requestInformation.host + "/ticker/" + market;
+    http_request request;
+    request.set_method(methods::GET);
+    http_client client(url);
+    Ticker ticker;
+    client.request(request).then([&ticker](http_response response) {
+    try {
+        const auto& v = response.extract_string().get();
+        web::json::value json = json::value::parse(v);
+        std::map<std::string, std::string> tickerJsonData;
+        for (auto [key, value] : json.as_object()) {
+            if (!value.is_string()) {
+                ticker.status = value.as_bool();
+                continue;
+            }
+            tickerJsonData[key] = value.as_string();
+        }
+        ticker.ask = std::stof(tickerJsonData["ask"]);
+        ticker.bid = std::stof(tickerJsonData["bid"]);
+        ticker.high = std::stof(tickerJsonData["high"]);
+        ticker.low = std::stof(tickerJsonData["low"]);
+        ticker.initialPrice = std::stof(tickerJsonData["initialprice"]);
+        ticker.price = std::stof(tickerJsonData["price"]);
+        ticker.volume = std::stof(tickerJsonData["volume"]);
+    } catch (const http_exception& e) {
+        std::cout << "Exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
+    }
+    }).wait();
+    return ticker;
 }
 
 void Trader::submitBuyOrder(const std::string& market, const double& quantity, const double& price, const double timeout) {
