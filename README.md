@@ -6,7 +6,7 @@ This is a TrageOgre C++ software that analyses the market, creates user desired 
 * listMarkets [x]
 * getTradeHistory []
 * getTicker []
-* getOrderBook []
+* getOrderBook [x]
 * authentication []
 
 ### private API ###
@@ -16,7 +16,7 @@ This is a TrageOgre C++ software that analyses the market, creates user desired 
 * getBalance []
 * getBalances [x]
 * getOrder []
-* getOrdersMarket [x]
+* getOrders [x]
 
-### Trade analysis implementation checklist ###
+## Trade analysis implementation checklist ###
 * 
