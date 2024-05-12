@@ -90,6 +90,7 @@
         "cinttypes": "cpp",
         "typeindex": "cpp",
         "*.dat": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "filesystem": "cpp"
     }
 }

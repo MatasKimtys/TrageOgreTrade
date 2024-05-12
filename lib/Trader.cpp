@@ -33,6 +33,7 @@ Trader::Trader(const unsigned int traderNumber, const std::string& host) {
     m_orders = getOrders();
     m_ticker = getTicker("QUBIC-USDT");
     m_tradeHistory = getMarketTradeHistory("QUBIC-USDT");
+    Balance balance = getBalance("BTC");
     std::cout << "Trader " << traderNumber << " created!\n";
 }
 
@@ -178,14 +179,6 @@ std::map<std::string, std::map<std::string, std::map<std::string, GetOrder>>> Tr
     return orders;
 }
 
-                        
-
-std::tuple<std::string, bool, double, double> Trader::getBalance(const std::string& currency) {
-    std::string url {m_requestInformation.host + "/account/balance{" + currency + "}"};
-
-    return {};
-}
-
 std::map<std::string, double> Trader::getBalances() const {
     std::map<std::string, double> balances;
     std::string url = m_requestInformation.host + "/account/balances";
@@ -279,6 +272,41 @@ std::vector<Trade> Trader::getMarketTradeHistory(const std::string market) const
     }
     }).wait();
     return tradeHistory;
+}
+
+Balance Trader::getBalance(const std::string currency) const {
+    Balance balance;
+    balance.currency = currency;
+    std::string url = m_requestInformation.host + "/account/balance";
+    http_request request;
+    request.set_method(methods::POST);
+    request.headers().set_content_type(U("\"application/json\""));
+    json::value postFields;
+    postFields[U("currency")] = json::value::string(currency);
+    request.set_body(postFields);
+    http_client_config config;
+    credentials credentials(U(m_apiKey.key), U(m_apiKey.secret));
+    config.set_credentials(credentials);
+    http_client client(url, config);
+    client.request(request)
+    .then([&balance](http_response response) {
+        try {
+            if (response.status_code() != status_codes::OK) {
+                std::cerr << "Bad client request\n";
+            }
+            const auto& v = response.extract_string().get();
+            web::json::value json = json::value::parse(v);
+            auto jsonObject = json.as_object();
+
+            balance.available = std::stof(jsonObject["available"].as_string());
+            balance.balance = std::stof(jsonObject["balance"].as_string());
+            balance.requestStatus = jsonObject["success"].as_bool();
+        } catch (const http_exception& e) {
+            std::cerr << "getBalance Exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
+        }
+    }).wait();
+
+    return balance;
 }
 
 void Trader::submitBuyOrder(const std::string& market, const double& quantity, const double& price, const double timeout) {

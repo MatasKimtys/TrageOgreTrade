@@ -13,7 +13,7 @@ This is a TrageOgre C++ software that analyses the market, creates user desired 
 * submitBuyOrder []
 * sumbitSellOrder []
 * cancelOrder []
-* getBalance []
+* getBalance [-]
 * getBalances [x]
 * getOrder []
 * getOrders [x]

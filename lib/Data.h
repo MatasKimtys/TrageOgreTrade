@@ -4,7 +4,7 @@
 struct Balance {
     std::string currency;
     bool requestStatus;
-    double current;
+    double balance;
     double available;
 };
 

@@ -33,6 +33,7 @@ protected:
     std::map<std::string, double> getBalances() const;
     Ticker getTicker(const std::string market) const;
     std::vector<Trade> getMarketTradeHistory(const std::string market) const;
+    Balance getBalance(const std::string currency) const;
     std::map<std::string, std::map<std::string, std::map<std::string, GetOrder>>> getOrders() const;
     std::pair<std::string, std::string> getApiKey() const {
         // Grabs first line as key and second line as secret from a textfile - "apikey.txt" located relative to main.cpp
@@ -54,7 +55,6 @@ protected:
 public:
     Trader(const unsigned int traderNumber, const std::string& host);
     ~Trader() {};
-    std::tuple<std::string, bool, double, double> getBalance(const std::string& currency);
     void downloadOrdersSpecificMarket(const std::string &market);
     OrderMarket getOrderBook(const std::string& market) const;
     std::map<std::string, Market> listMarkets() const;
