@@ -175,15 +175,7 @@ std::map<std::string, std::map<std::string, std::map<std::string, GetOrder>>> Tr
     return orders;
 }
 
-                        // std::cout << 
-                        //     value.is_array() << "\n" <<
-                        //     value.is_boolean() << "\n" <<
-                        //     value.is_double() << "\n" <<
-                        //     value.is_integer() << "\n" <<
-                        //     value.is_null() << "\n" <<
-                        //     value.is_number() << "\n" <<
-                        //     value.is_object() << "\n" <<
-                        //     value.is_string() << "\n";
+                        
 
 std::tuple<std::string, bool, double, double> Trader::getBalance(const std::string& currency) {
     std::string url {m_requestInformation.host + "/account/balance{" + currency + "}"};
@@ -232,3 +224,14 @@ void Trader::submitCancelOrder(std::string UUID, const double timeout) {
     std::string path {"/order/cancel"};
 
 }
+
+
+    // std::cout << 
+    //     "is_array:" << value.is_array() << "\n" <<
+    //     "is_boolean:" << value.is_boolean() << "\n" <<
+    //     "is_double:" << value.is_double() << "\n" <<
+    //     "is_integer:" << value.is_integer() << "\n" <<
+    //     "is_null:" << value.is_null() << "\n" <<
+    //     "is_number:" << value.is_number() << "\n" <<
+    //     "is_object:" << value.is_object() << "\n" <<
+    //     "is_string:" << value.is_string() << "\n\n";
