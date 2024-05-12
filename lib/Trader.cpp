@@ -32,6 +32,7 @@ Trader::Trader(const unsigned int traderNumber, const std::string& host) {
     m_markets = listMarkets();
     m_orders = getOrders();
     m_ticker = getTicker("QUBIC-USDT");
+    m_tradeHistory = getMarketTradeHistory("QUBIC-USDT");
     std::cout << "Trader " << traderNumber << " created!\n";
 }
 
@@ -242,6 +243,34 @@ Ticker Trader::getTicker(const std::string market) const {
     }
     }).wait();
     return ticker;
+}
+
+std::vector<Trade> Trader::getMarketTradeHistory(const std::string market) const {
+    std::vector<Trade> tradeHistory;
+    std::string url = m_requestInformation.host + "/history/" + market;
+    http_request request;
+    request.set_method(methods::GET);
+    http_client client(url);
+    client.request(request)
+    .then([&tradeHistory](http_response response) {
+        try {
+            const auto& v = response.extract_string().get();
+            web::json::value json = json::value::parse(v);
+            for (const auto& element : json.as_array()) {
+                auto object = element.as_object();
+                const Trade trade = {
+                    object["date"].as_integer(),
+                    object["type"].as_string(),
+                    std::stof(object["price"].as_string()),
+                    std::stof(object["quantity"].as_string())
+                };
+                tradeHistory.emplace_back(trade);
+            }
+        } catch (const http_exception& e) {
+            std::cout << "getMarketTradeHistory exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
+        }
+    }).wait();
+    return tradeHistory;
 }
 
 void Trader::submitBuyOrder(const std::string& market, const double& quantity, const double& price, const double timeout) {

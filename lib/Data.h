@@ -71,7 +71,7 @@ struct Ticker {
 };
 
 struct Trade {
-    unsigned int date;
+    int date;
     std::string type;
     double price;
     double quanitity;

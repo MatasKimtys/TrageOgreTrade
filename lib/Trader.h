@@ -24,6 +24,7 @@ protected:
     std::map<std::string, double> m_balances;
     std::map<std::string, Market> m_markets;
     Ticker m_ticker;
+    std::vector<Trade> m_tradeHistory;
     std::map<std::string, std::map<std::string, std::map<std::string, GetOrder>>> m_orders;
     
     void submitBuyOrder(const std::string& market, const double& quantity, const double& price, const double timeout);
@@ -31,6 +32,7 @@ protected:
     void submitCancelOrder(std::string uuid, const double timeout);
     std::map<std::string, double> getBalances() const;
     Ticker getTicker(const std::string market) const;
+    std::vector<Trade> getMarketTradeHistory(const std::string market) const;
     std::map<std::string, std::map<std::string, std::map<std::string, GetOrder>>> getOrders() const;
     std::pair<std::string, std::string> getApiKey() const {
         // Grabs first line as key and second line as secret from a textfile - "apikey.txt" located relative to main.cpp
