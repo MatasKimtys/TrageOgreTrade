@@ -44,7 +44,6 @@ OrderMarket Trader::getOrderBook(const std::string& market) const {
     OrderMarket orderMarket;
     client.request(request).then([&orderMarket](http_response response) {
     try {
-        std::cout << "Status code getOrderBook success " << response.status_code() << std::endl;
         const auto& v = response.extract_string().get();
         web::json::value json = json::value::parse(v);
 
@@ -153,7 +152,6 @@ std::map<std::string, std::map<std::string, std::map<std::string, GetOrder>>> Tr
     client.request(request)
     .then([&orders](http_response response) {
         try {
-            std::cout << "Status code getOrders success " << response.status_code() << std::endl;
             const auto& v = response.extract_string().get();
             web::json::value json = json::value::parse(v);
             for (const auto& element : json.as_array()) {

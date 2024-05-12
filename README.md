@@ -18,5 +18,5 @@ This is a TrageOgre C++ software that analyses the market, creates user desired 
 * getOrder []
 * getOrders [x]
 
-## Trade analysis implementation checklist ###
+## Market analysis implementation checklist ###
 * 
