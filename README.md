@@ -4,12 +4,12 @@ This is a TrageOgre C++ software that analyses the market, creates user desired 
 ## API implementation checklist: ###
 ### public API ###
 * listMarkets [x]
-* getTradeHistory []
-* getTicker []
+* getTradeHistory [x]
+* getTicker [x]
 * getOrderBook [x]
-* authentication []
 
 ### private API ###
+* authentication [x]
 * submitBuyOrder []
 * sumbitSellOrder []
 * cancelOrder []
