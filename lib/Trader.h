@@ -31,6 +31,7 @@ protected:
     std::map<std::string, double> getBalances() const;
     std::map<std::string, std::map<std::string, std::map<std::string, GetOrder>>> getOrders() const;
     std::pair<std::string, std::string> getApiKey() const {
+        // Grabs first line as key and second line as secret from a textfile - "apikey.txt" located relative to main.cpp
         auto apiKeyPath = std::filesystem::current_path() / "apikey.txt";
         std::ifstream file(apiKeyPath);
         std::string key;
@@ -51,6 +52,6 @@ public:
     ~Trader() {};
     std::tuple<std::string, bool, double, double> getBalance(const std::string& currency);
     void downloadOrdersSpecificMarket(const std::string &market);
-    OrderMarket getSpecificMarketJson(const std::string& market) const;
+    OrderMarket getOrderBook(const std::string& market) const;
     std::map<std::string, Market> listMarkets() const;
 };

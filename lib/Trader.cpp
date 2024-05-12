@@ -34,20 +34,7 @@ Trader::Trader(const unsigned int traderNumber, const std::string& host) {
     std::cout << "Trader " << traderNumber << " created!\n";
 }
 
-void Trader::submitBuyOrder(const std::string& market, const double& quantity, const double& price, const double timeout) {
-    std::string path {"/order/buy"};
-}
-
-void Trader::submitSellOrder(const std::string& market, const double& quantity, const double& price, const double timeout) {
-    std::string path {"/order/sell"};
-}
-
-void Trader::submitCancelOrder(std::string UUID, const double timeout) {
-    std::string path {"/order/cancel"};
-
-}
-
-OrderMarket Trader::getSpecificMarketJson(const std::string& market) const {
+OrderMarket Trader::getOrderBook(const std::string& market) const {
     std::string url = m_requestInformation.host + "/orders/" + market;
     http_request request;
     request.set_method(methods::GET);
@@ -56,7 +43,7 @@ OrderMarket Trader::getSpecificMarketJson(const std::string& market) const {
     client.request(request).then([&orderMarket](http_response response) {
     try {
         if (response.status_code() == status_codes::OK) {
-            std::cout << "Status code getSpecificMarketJson success " << response.status_code() << std::endl;
+            std::cout << "Status code getOrderBook success " << response.status_code() << std::endl;
             const auto& v = response.extract_string().get();
             web::json::value json = json::value::parse(v);
 
@@ -70,7 +57,7 @@ OrderMarket Trader::getSpecificMarketJson(const std::string& market) const {
             }
 
         } else {
-            std::cerr << "Status code getSpecificMarketJson failed " << response.status_code() << std::endl;
+            std::cerr << "Status code getOrderBook failed " << response.status_code() << std::endl;
         }
     } catch (const http_exception& e) {
         std::cout << "exception: " << e.error_code().message() << " " << e.what() << "\n";
@@ -244,4 +231,17 @@ std::map<std::string, double> Trader::getBalances() const {
     }).wait();
 
     return balances;
+}
+
+void Trader::submitBuyOrder(const std::string& market, const double& quantity, const double& price, const double timeout) {
+    std::string path {"/order/buy"};
+}
+
+void Trader::submitSellOrder(const std::string& market, const double& quantity, const double& price, const double timeout) {
+    std::string path {"/order/sell"};
+}
+
+void Trader::submitCancelOrder(std::string UUID, const double timeout) {
+    std::string path {"/order/cancel"};
+
 }

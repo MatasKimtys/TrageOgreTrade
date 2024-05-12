@@ -46,7 +46,7 @@ int main(int, char**){
     copyFilesToBuild("apikey.txt");
     const std::string host = "https://tradeogre.com/api/v1";
     Trader trader(0, host);
-    trader.getSpecificMarketJson("QUBIC-USDT");
+    trader.getOrderBook("QUBIC-USDT");
     runTime.endTime = std::time(nullptr);
     printTimeTaken(runTime);
 }
