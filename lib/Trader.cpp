@@ -44,26 +44,24 @@ OrderMarket Trader::getOrderBook(const std::string& market) const {
     OrderMarket orderMarket;
     client.request(request).then([&orderMarket](http_response response) {
     try {
-        if (response.status_code() == status_codes::OK) {
-            std::cout << "Status code getOrderBook success " << response.status_code() << std::endl;
-            const auto& v = response.extract_string().get();
-            web::json::value json = json::value::parse(v);
+        std::cout << "Status code getOrderBook success " << response.status_code() << std::endl;
+        const auto& v = response.extract_string().get();
+        web::json::value json = json::value::parse(v);
 
-            orderMarket.status = json["success"].as_bool();
-            for (auto [key, value]:json["buy"].as_object()) {
-                orderMarket.buyOrders[std::stof(key)] = std::stof(value.as_string());
-            }
+        orderMarket.status = json["success"].as_bool();
+        for (auto [key, value]:json["buy"].as_object()) {
+            orderMarket.buyOrders[std::stof(key)] = std::stof(value.as_string());
+        }
 
-            for (auto [key, value]:json["sell"].as_object()) {
-                orderMarket.sellOrders[std::stof(key)] = std::stof(value.as_string());
-            }
-
-        } else {
-            std::cerr << "Status code getOrderBook failed " << response.status_code() << std::endl;
+        for (auto [key, value]:json["sell"].as_object()) {
+            orderMarket.sellOrders[std::stof(key)] = std::stof(value.as_string());
         }
     } catch (const http_exception& e) {
-        std::cout << "exception: " << e.error_code().message() << " " << e.what() << "\n";
+        std::cerr << "getOrderBook exception: " << e.error_code().message() << " " << e.what() << "\n";
+    } catch (...) {
+        std::cerr << "Error in getOrderBook\n";
     }
+
     }).wait();
     return orderMarket;
 }
@@ -96,7 +94,9 @@ std::map<std::string, Market> Trader::listMarkets() const {
             }
         }
     } catch (const http_exception& e) {
-        std::cout << "Exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
+        std::cerr << "listMarkets exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
+    } catch (...) {
+        std::cerr << "Error in listMarkets\n";
     }
     }).wait();
     return markets;
@@ -135,7 +135,9 @@ void Trader::downloadOrdersSpecificMarket(const std::string& market) {
     try {
         requestTask.wait();
     } catch (const http_exception &e) {
-        std::cout << "Exception: " << e.error_code().message() << " " << e.what() << " status code:" << e.error_code() << "\n";
+        std::cerr << "Exception: " << e.error_code().message() << " " << e.what() << " status code:" << e.error_code() << "\n";
+    } catch (...) {
+        std::cerr << "Error in downloadSpecificMarket\n";
     }
 }
 
@@ -170,8 +172,10 @@ std::map<std::string, std::map<std::string, std::map<std::string, GetOrder>>> Tr
                 );
             }
         } catch (const http_exception& e) {
-            std::cout << "Exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
-        }
+            std::cerr << "getOrders exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
+        } catch (...) {
+        std::cerr << "Error in getOrders\n";
+    }
     }).wait();
     return orders;
 }
@@ -206,8 +210,10 @@ std::map<std::string, double> Trader::getBalances() const {
                 balances[key] = balance;
             }
         } catch (const http_exception& e) {
-            std::cout << "Exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
-        }
+            std::cerr << "getBalances Exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
+        } catch (...) {
+        std::cerr << "Error in getBalance\n";
+    }
     }).wait();
 
     return balances;
@@ -239,7 +245,9 @@ Ticker Trader::getTicker(const std::string market) const {
         ticker.price = std::stof(tickerJsonData["price"]);
         ticker.volume = std::stof(tickerJsonData["volume"]);
     } catch (const http_exception& e) {
-        std::cout << "Exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
+        std::cerr << "getTicker exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
+    } catch (...) {
+        std::cerr << "Error in getTicker\n";
     }
     }).wait();
     return ticker;
@@ -267,8 +275,10 @@ std::vector<Trade> Trader::getMarketTradeHistory(const std::string market) const
                 tradeHistory.emplace_back(trade);
             }
         } catch (const http_exception& e) {
-            std::cout << "getMarketTradeHistory exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
-        }
+            std::cerr << "getMarketTradeHistory exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
+        } catch (...) {
+        std::cerr << "Error in getMarketTradeHistory\n";
+    }
     }).wait();
     return tradeHistory;
 }
@@ -285,6 +295,8 @@ void Trader::submitCancelOrder(std::string UUID, const double timeout) {
     std::string path {"/order/cancel"};
 
 }
+
+
 
 
     // std::cout << 
