@@ -277,16 +277,17 @@ std::vector<Trade> Trader::getMarketTradeHistory(const std::string market) const
 Balance Trader::getBalance(const std::string currency) const {
     Balance balance;
     balance.currency = currency;
-    std::string url = m_requestInformation.host + "/account/balance";
+    std::string url = m_requestInformation.host + "/account/balance?currency=" + currency;
+    uri_builder builder(U(url));
+    // builder.append_query(U("currency:") +  + currency);
     http_request request;
     request.set_method(methods::POST);
-    request.headers().set_content_type(U("\"application/json\""));
-    json::value postFields;
-    postFields[U("currency")] = json::value::string(currency);
-    request.set_body(postFields);
+    // request.headers().set_content_type(U("application/x-www-form-urlencoded"));
     http_client_config config;
     credentials credentials(U(m_apiKey.key), U(m_apiKey.secret));
     config.set_credentials(credentials);
+    auto encodedString = builder.to_uri().encode_uri(builder.to_string());
+    std::cout << url << std::endl;
     http_client client(url, config);
     client.request(request)
     .then([&balance](http_response response) {
