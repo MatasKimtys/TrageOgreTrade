@@ -33,7 +33,8 @@ Trader::Trader(const unsigned int traderNumber, const std::string& host) {
     m_orders = getOrders();
     m_ticker = getTicker("QUBIC-USDT");
     m_tradeHistory = getMarketTradeHistory("QUBIC-USDT");
-    Balance balance = getBalance("BTC");
+    Balance balance = getBalance("QUBIC");
+    GetOrder order = getOrder("77e09670-ec62-4ac2-ae77-a27a31fc2cf9");
     std::cout << "Trader " << traderNumber << " created!\n";
 }
 
@@ -277,18 +278,17 @@ std::vector<Trade> Trader::getMarketTradeHistory(const std::string market) const
 Balance Trader::getBalance(const std::string currency) const {
     Balance balance;
     balance.currency = currency;
-    std::string url = m_requestInformation.host + "/account/balance?currency=" + currency;
-    uri_builder builder(U(url));
-    // builder.append_query(U("currency:") +  + currency);
+    std::string url = "/account/balance";
     http_request request;
+    utility::string_t postData = U("currency=") + utility::conversions::to_string_t(currency);
     request.set_method(methods::POST);
-    // request.headers().set_content_type(U("application/x-www-form-urlencoded"));
+    request.headers().set_content_type(U("application/x-www-form-urlencoded"));
+    request.set_request_uri(U(url));
+    request.set_body(postData);
     http_client_config config;
     credentials credentials(U(m_apiKey.key), U(m_apiKey.secret));
     config.set_credentials(credentials);
-    auto encodedString = builder.to_uri().encode_uri(builder.to_string());
-    std::cout << url << std::endl;
-    http_client client(url, config);
+    http_client client(m_requestInformation.host, config);
     client.request(request)
     .then([&balance](http_response response) {
         try {
@@ -308,6 +308,39 @@ Balance Trader::getBalance(const std::string currency) const {
     }).wait();
 
     return balance;
+}
+
+GetOrder Trader::getOrder(const std::string uuid) const {
+    GetOrder order;
+    std::string url = m_requestInformation.host + "/account/order/" + uuid;
+    http_request request;
+    request.set_method(methods::GET);
+    http_client_config config;
+    credentials credentials(U(m_apiKey.key), U(m_apiKey.secret));
+    config.set_credentials(credentials);
+    http_client client(url, config);
+    client.request(request)
+    .then([&order](http_response response) {
+        try {
+            if (response.status_code() != status_codes::OK) {
+                std::cerr << "Bad client request\n";
+            }
+            const auto& v = response.extract_string().get();
+            web::json::value json = json::value::parse(v);
+            auto object = json.as_object();
+            order.date = std::stoi(object["date"].as_string());
+            order.fulfilled = std::stof(object["fulfilled"].as_string());
+            order.market = object["market"].as_string();
+            order.price = std::stof(object["price"].as_string());
+            order.quantity = std::stof(object["quantity"].as_string());
+            order.type = object["type"].as_string();
+        } catch (const http_exception& e) {
+            std::cerr << "getOrders exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
+        } catch (...) {
+            std::cerr << "Error in getOrder\n";
+        }
+    }).wait();
+    return order;
 }
 
 void Trader::submitBuyOrder(const std::string& market, const double& quantity, const double& price, const double timeout) {

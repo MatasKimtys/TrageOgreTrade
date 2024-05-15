@@ -34,6 +34,7 @@ protected:
     Ticker getTicker(const std::string market) const;
     std::vector<Trade> getMarketTradeHistory(const std::string market) const;
     Balance getBalance(const std::string currency) const;
+    GetOrder getOrder(const std::string uuid) const;
     std::map<std::string, std::map<std::string, std::map<std::string, GetOrder>>> getOrders() const;
     std::pair<std::string, std::string> getApiKey() const {
         // Grabs first line as key and second line as secret from a textfile - "apikey.txt" located relative to main.cpp
