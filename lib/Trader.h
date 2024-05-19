@@ -26,15 +26,15 @@ protected:
     Ticker m_ticker;
     std::vector<Trade> m_tradeHistory;
     std::map<std::string, std::map<std::string, std::map<std::string, GetOrder>>> m_orders;
-    
-    void submitBuyOrder(const std::string& market, const double& quantity, const double& price, const double timeout);
-    void submitSellOrder(const std::string& market, const double& quantity, const double& price, const double timeout);
-    void submitCancelOrder(std::string uuid, const double timeout);
+
     std::map<std::string, double> getBalances() const;
     Ticker getTicker(const std::string market) const;
     std::vector<Trade> getMarketTradeHistory(const std::string market) const;
     Balance getBalance(const std::string currency) const;
     GetOrder getOrder(const std::string uuid) const;
+    BuyOrder submitBuyOrder(std::string market, double quantity, double price, double timeout) const;
+    SellOrder submitSellOrder(std::string market, double quantity, double price, double timeout) const;
+    bool submitCancelOrder(std::string uuid) const;
     std::map<std::string, std::map<std::string, std::map<std::string, GetOrder>>> getOrders() const;
     std::pair<std::string, std::string> getApiKey() const {
         // Grabs first line as key and second line as secret from a textfile - "apikey.txt" located relative to main.cpp
@@ -55,7 +55,9 @@ protected:
 
 public:
     Trader(const unsigned int traderNumber, const std::string& host);
-    ~Trader() {};
+    double calculateBuyWorth(double currencyQuantity, double priceAt) const;
+    double calculateSellWorth(double currencyQuantity, double priceAt) const;
+    ~Trader(){};
     void downloadOrdersSpecificMarket(const std::string &market);
     OrderMarket getOrderBook(const std::string& market) const;
     std::map<std::string, Market> listMarkets() const;

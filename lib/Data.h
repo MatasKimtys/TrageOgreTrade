@@ -44,6 +44,7 @@ struct OrderMarket {
 struct Order {
     bool status;
     std::string uuid;
+    double quantity;
     double buyNewBalanceAvailable;
     double sellNewBalanceAvailable;
 };

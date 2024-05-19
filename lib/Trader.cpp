@@ -33,9 +33,19 @@ Trader::Trader(const unsigned int traderNumber, const std::string& host) {
     m_orders = getOrders();
     m_ticker = getTicker("QUBIC-USDT");
     m_tradeHistory = getMarketTradeHistory("QUBIC-USDT");
-    Balance balance = getBalance("QUBIC");
-    GetOrder order = getOrder("77e09670-ec62-4ac2-ae77-a27a31fc2cf9");
+    Balance qubicBalance = getBalance("QUBIC");
+    // GetOrder order = getOrder("77e09670-ec62-4ac2-ae77-a27a31fc2cf9");
+    // BuyOrder buyOrder = submitBuyOrder("QUBIC-USDT", 2, 0.00000528, 2.0);
+    SellOrder sellOrder = submitSellOrder("QUBIC-USDT", qubicBalance.available, 0.00000534, 2.0);
     std::cout << "Trader " << traderNumber << " created!\n";
+}
+
+double Trader::calculateBuyWorth(double currencyQuantity, double priceAt) const {
+    return currencyQuantity / priceAt;
+}
+
+double Trader::calculateSellWorth(double currencyQuantity, double priceAt) const {
+    return currencyQuantity * priceAt;
 }
 
 OrderMarket Trader::getOrderBook(const std::string& market) const {
@@ -343,17 +353,125 @@ GetOrder Trader::getOrder(const std::string uuid) const {
     return order;
 }
 
-void Trader::submitBuyOrder(const std::string& market, const double& quantity, const double& price, const double timeout) {
-    std::string path {"/order/buy"};
+utility::string_t float_to_string(float value, int precision) {
+    std::ostringstream out;
+    out << std::fixed << std::setprecision(precision) << value;
+    return conversions::to_string_t(out.str());
 }
 
-void Trader::submitSellOrder(const std::string& market, const double& quantity, const double& price, const double timeout) {
-    std::string path {"/order/sell"};
+BuyOrder Trader::submitBuyOrder(std::string market, double quantity, double price, double timeout) const {
+    BuyOrder buyOrder;
+    std::string url = "/order/buy";
+    http_request request;
+    
+    // Quantity should be used in a way that results in total spending resulting in more than 1 of e.g. USDT.
+    utility::string_t quantity_str = float_to_string(quantity, 8);
+    utility::string_t price_str = float_to_string(price, 8);
+    utility::string_t postData = 
+        U("market=") + market +
+        U("&quantity=") + quantity_str +
+        U("&price=") + price_str;
+    request.set_method(methods::POST);
+    request.headers().set_content_type(U("application/x-www-form-urlencoded"));
+    request.set_request_uri(U(url));
+    request.set_body(postData);
+    http_client_config config;
+    credentials credentials(U(m_apiKey.key), U(m_apiKey.secret));
+    config.set_credentials(credentials);
+    http_client client(m_requestInformation.host, config);
+    client.request(request)
+    .then([&buyOrder](http_response response) {
+        try {
+            if (response.status_code() != status_codes::OK) {
+                std::cerr << "Bad client request\n";
+            }
+            const auto& v = response.extract_string().get();
+            web::json::value json = json::value::parse(v);
+            auto jsonObject = json.as_object();
+            
+            buyOrder.buyNewBalanceAvailable = std::stof(jsonObject["bnewbalavail"].as_string());
+            buyOrder.sellNewBalanceAvailable = std::stof(jsonObject["snewbalavail"].as_string());
+            buyOrder.quantity = std::stof(jsonObject["quantity"].as_string());
+            buyOrder.status = jsonObject["success"].as_bool();
+            buyOrder.uuid = jsonObject["uuid"].as_string();
+        } catch (const http_exception& e) {
+            std::cerr << "submitBuyOrder Exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
+        }
+    }).wait();
+
+    return buyOrder;
 }
 
-void Trader::submitCancelOrder(std::string UUID, const double timeout) {
-    std::string path {"/order/cancel"};
+SellOrder Trader::submitSellOrder(std::string market, double quantity, double price, double timeout) const {
+    SellOrder sellOrder;
+    std::string url = "/order/sell";
+    http_request request;
+    
+    // Quantity should be used in a way that results in total spending more than 1 of e.g. USDT.
+    utility::string_t postData = 
+        U("market=") + market +
+        U("&quantity=") + float_to_string(quantity, 8) +
+        U("&price=") + float_to_string(price, 8);
+    request.set_method(methods::POST);
+    request.headers().set_content_type(U("application/x-www-form-urlencoded"));
+    request.set_request_uri(U(url));
+    request.set_body(postData);
+    http_client_config config;
+    credentials credentials(U(m_apiKey.key), U(m_apiKey.secret));
+    config.set_credentials(credentials);
+    http_client client(m_requestInformation.host, config);
+    client.request(request)
+    .then([&sellOrder](http_response response) {
+        try {
+            if (response.status_code() != status_codes::OK) {
+                std::cerr << "Bad client request\n";
+            }
+            const auto& v = response.extract_string().get();
+            web::json::value json = json::value::parse(v);
+            auto jsonObject = json.as_object();
+            
+            sellOrder.buyNewBalanceAvailable = std::stof(jsonObject["bnewbalavail"].as_string());
+            sellOrder.sellNewBalanceAvailable = std::stof(jsonObject["snewbalavail"].as_string());
+            sellOrder.quantity = std::stof(jsonObject["quantity"].as_string());
+            sellOrder.status = jsonObject["success"].as_bool();
+            sellOrder.uuid = jsonObject["uuid"].as_string();
+        } catch (const http_exception& e) {
+            std::cerr << "submitSellOrder Exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
+        }
+    }).wait();
 
+    return sellOrder;
+}
+
+bool Trader::submitCancelOrder(std::string uuid) const {
+    std::string url = "/account/balance";
+    bool success = false;
+    http_request request;
+    utility::string_t postData = U("uuid=") + utility::conversions::to_string_t(uuid);
+    request.set_method(methods::POST);
+    request.headers().set_content_type(U("application/x-www-form-urlencoded"));
+    request.set_request_uri(U(url));
+    request.set_body(postData);
+    http_client_config config;
+    credentials credentials(U(m_apiKey.key), U(m_apiKey.secret));
+    config.set_credentials(credentials);
+    http_client client(m_requestInformation.host, config);
+    client.request(request)
+    .then([&success](http_response response) {
+        try {
+            if (response.status_code() != status_codes::OK) {
+                std::cerr << "Bad client request\n";
+            }
+            const auto& v = response.extract_string().get();
+            web::json::value json = json::value::parse(v);
+            auto jsonObject = json.as_object();
+            success = jsonObject["success"].as_bool();
+        } catch (const http_exception& e) {
+            std::cerr << "getBalance Exception: " << e.error_code().message() << " " << e.what() << " status code:" << response.status_code() << "\n";
+        }
+    }).wait();
+
+    return success;
 }
 
 
