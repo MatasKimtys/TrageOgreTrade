@@ -13,9 +13,9 @@ This is a TrageOgre C++ software that analyses the market, creates user desired 
 * submitBuyOrder []
 * sumbitSellOrder []
 * cancelOrder []
-* getBalance [-]
+* getBalance [x]
 * getBalances [x]
-* getOrder []
+* getOrder [x]
 * getOrders [x]
 
 ## Market analysis implementation checklist ###
