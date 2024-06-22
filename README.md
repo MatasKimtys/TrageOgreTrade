@@ -10,13 +10,13 @@ This is a TrageOgre C++ software that analyses the market, creates user desired 
 
 ### private API ###
 * authentication [x]
-* submitBuyOrder []
-* sumbitSellOrder []
-* cancelOrder []
+* submitBuyOrder [x]
+* sumbitSellOrder [x]
+* cancelOrder [x]
 * getBalance [x]
 * getBalances [x]
 * getOrder [x]
 * getOrders [x]
 
 ## Market analysis implementation checklist ###
-* 
+* lack of candle mechanics from api
